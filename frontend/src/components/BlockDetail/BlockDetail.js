@@ -16,7 +16,7 @@ const BlockDetail = () => {
     useEffect(() => {
         const fetchBlock = async () => {
             try {
-                const response = await fetch(`http://localhost:3000/block/${slot}`);
+                const response = await fetch(`https://solana-explorer-api-git-main-schizos-projects.vercel.app/block/${slot}`);
                 if (response.status === 404) {
                     throw new Error("Block not found");
                 }
@@ -29,13 +29,13 @@ const BlockDetail = () => {
 
         const fetchTransactions = async () => {
             try {
-                const response = await fetch(`http://localhost:3000/txs/${slot}`);
+                const response = await fetch(`https://solana-explorer-api-git-main-schizos-projects.vercel.app/txs/${slot}`);
                 if (!response.ok) {
                     throw new Error("Transactions not found");
                 }
                 const data = await response.json();
                 console.log(data.length)
-                const success = await fetch(`http://localhost:3000/txSuccess/${slot}`)
+                const success = await fetch(`https://solana-explorer-api-git-main-schizos-projects.vercel.app/txSuccess/${slot}`)
                 const res = await success.json();
                 const successTx = await res.length;
                 setTotalSuccess(successTx)
@@ -45,7 +45,7 @@ const BlockDetail = () => {
                 );
                 const txDetails = await Promise.all(
                     transactionSignatures.map(async (signature) => {
-                        const txRes = await fetch(`http://localhost:3000/tx/${signature}`);
+                        const txRes = await fetch(`https://solana-explorer-api-git-main-schizos-projects.vercel.app/tx/${signature}`);
                         return await txRes.json();
                     })
                 );

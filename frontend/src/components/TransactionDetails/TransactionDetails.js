@@ -10,7 +10,7 @@ const TransactionDetail = () => {
     useEffect(() => {
         const fetchTransaction = async () => {
             try {
-                const response = await fetch(`http://localhost:3000/tx/${signature}`);
+                const response = await fetch(`https://solana-explorer-api-git-main-schizos-projects.vercel.app/tx/${signature}`);
                 if (!response.ok) {
                     throw new Error("Transaction not found");
                 }
