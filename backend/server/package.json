@@ -3,10 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "vercel-build": "node server-postgresql.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon server.js",
-    "start-postgres": "node server-postgresql.js"
+    "start-postgres": "nodemon server-postgresql.js"
   },
   "author": "",
   "license": "ISC",
