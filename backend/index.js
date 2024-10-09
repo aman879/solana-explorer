@@ -1,10 +1,8 @@
-require('dotenv').config();
 
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const knex = require("knex");
-const pass = process.env.db_pass;
 
 const db = knex({
     client: "pg",
@@ -12,7 +10,7 @@ const db = knex({
         host: "aws-0-us-east-1.pooler.supabase.com",
         port: 6543,
         user: "postgres.qdgbfjyqocepednnfora",
-        password: pass,
+        password: "shaurya@123",
         database: "postgres"
     }
 })
