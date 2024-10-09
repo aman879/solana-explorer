@@ -11,7 +11,7 @@ const Explorer = () => {
     useEffect(() => {
         const fetchBlocks = async () => {
             try {
-                const response = await fetch('http://localhost:3000/blocks/top');
+                const response = await fetch('https://solana-explorer-api-git-main-schizos-projects.vercel.app/blocks/top');
                 if (!response.ok) {
                     throw new Error("Failed to fetch blocks");
                 }
