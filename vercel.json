@@ -4,12 +4,31 @@
       {
         "src": "backend/server/server-postgresql.js",
         "use": "@vercel/node"
+      },
+      {
+        "src": "package.json",
+        "use": "@vercel/static-build",
+        "config": {
+          "distDir": "build"
+        }
       }
     ],
     "routes": [
       {
-        "src": "/(.*)",
+        "src": "/blocks/(.*)",  
         "dest": "/backend/server/server-postgresql.js"
+      },
+      {
+        "src": "/block/(.*)",  
+        "dest": "/backend/server/server-postgresql.js"
+      },
+      {
+        "src": "/tx/(.*)",  
+        "dest": "/backend/server/server-postgresql.js"
+      },
+      {
+        "src": "/(.*)",          
+        "dest": "/index.html"
       }
     ]
   }
