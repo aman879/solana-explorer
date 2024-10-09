@@ -2,7 +2,7 @@
     "version": 2,
     "builds": [
       {
-        "src": "server-postgresql.js",
+        "src": "./server-postgresql.js",
         "use": "@vercel/node"
       }
     ],
