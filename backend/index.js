@@ -11,7 +11,10 @@ const db = knex({
         port: 6543,
         user: "postgres.qdgbfjyqocepednnfora",
         password: "shaurya@123",
-        database: "postgres"
+        database: "postgres",
+        ssl: {
+            rejectUnauthorized: false
+        }
     }
 })
 
