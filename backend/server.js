@@ -1,165 +1,112 @@
 require('dotenv').config();
+
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const { Database } = require("arangojs");
+const knex = require("knex");
 const pass = process.env.db_pass;
 
-const db = new Database ({
-    url: "http://127.0.0.1:8529",
-    databaseName: "solana",
-    auth: { username: 'root' , password: pass},
-});
+const db = knex({
+    client: "pg",
+    connection: {
+        host: "aws-0-us-east-1.pooler.supabase.com",
+        port: 6543,
+        user: "postgres.qdgbfjyqocepednnfora",
+        password: pass,
+        database: "postgres"
+    }
+})
 
 const app = express();
+
 app.use(bodyParser.json());
 app.use(cors());
+
+app.get("/block/:slot", (req, res) => {
+    const { slot } = req.params;
+
+    db.select("*")
+        .from("blocks")
+        .where({ slot: slot})
+        .then((block) => {
+            if (block.length) {
+                res.json(block[0]);
+            } else {
+                res.status(400).json("block not found");
+            }
+        })
+        .catch((error) => res.status(400).json("Error getting block"));
+});
+
+app.get("/blocks/top", (req, res) => {
+    db.select("*")
+        .from("blocks")
+        .orderBy("slot", "desc") 
+        .limit(10)               
+        .then((blocks) => {
+            res.status(200).json(blocks);
+        })
+        .catch((error) => {
+            console.error("Error retrieving blocks:", error); 
+            res.status(500).json({ message: "Internal Server Error" });
+        });
+});
+
+
+app.get("/txSuccess/:slot", (req, res) => {
+    const { slot } = req.params;
+
+    db('transactions')
+        .count('*')
+        .where({ slot:slot, success: true })
+        .then((count) => {
+            res.json(count[0]);
+        })
+        .catch((error) => {
+            res.status(400).json("Error getting success count");
+        }
+    );
+})
+
+app.get("/tx/:sign", (req, res) => {
+    const { sign } = req.params;
+
+    db.select("*")
+        .from("transactions")
+        .where({signature: sign})
+        .then((tx) => {
+            if (tx.length) {
+                res.json(tx[0]);
+            } else {
+                res.status(400).json("tx not found");
+            }
+        })
+        .catch((error) => res.status(400).json("Error getting transaction"));
+})
+
+app.get("/txs/:slot", (req, res) => {
+    const { slot } = req.params;
+
+    db.select("signature")
+        .from("transactions")
+        .where({slot: slot})
+        .then((sign) => {
+            if (sign.length) {
+                res.json(sign);
+            } else {
+                res.status(400).json("signature not found");
+            }
+        })
+        .catch((error) => res.status(400).json("Error getting signatures details"));
+})
+
 
 app.get("/", (req, res) => {
     res.send("success");
 });
 
-// get the block by slot number
-app.get("/block/:slot", (req, res) => {
-    const { slot } = req.params;
+const port = process.env.PORT || 3000;
 
-    db.query({
-        query: `FOR block IN @@c FILTER block.slot ==${slot} RETURN block`,
-        bindVars: { 
-            "@c": 'blocks',
-        },
-    })
-    .then(cursor => {
-        return cursor.all();
-    })
-    .then(blocks => {
-        if (blocks.length) {
-            res.status(200).json(blocks[0]); 
-        } else {
-            res.status(404).json({ message: "Block not found" });
-        }
-    })
-    .catch(error => {
-        console.error("Error retrieving block:", error); 
-        res.status(500).json({ message: "Internal Server Error" }); 
-    });
+app.listen(port, () => {
+    console.log(`App is running on port ${port}`);
 })
-
-app.get("/blocks/top", (req, res) => {
-    db.query({
-        query: "FOR block IN @@c SORT block.slot DESC LIMIT 10 RETURN block",
-        bindVars: { "@c": "blocks"}
-    })
-    .then(cursor => cursor.all())
-    .then(blocks => {
-        res.status(200).json(blocks);
-    })
-    .catch(error => {
-        console.error("Error retrieving blocks:", error); 
-        res.status(500).json({ message: "Internal Server Error" });
-    });
-});
-
-
-// get the recent slot 
-app.get("/recent", (req, res) => {
-    db.query({
-        query: "RETURN MAX((FOR doc IN @@c RETURN doc.slot))",
-        bindVars: { "@c": "blocks"}
-    })
-    .then(cursor => {
-        return cursor.all();
-    })
-    .then(slot => {
-        if (slot.length) {
-            res.status(200).json(slot[0]); 
-        } else {
-            res.status(404).json({ message: "Block not found" });
-        }
-    })
-    .catch(error => {
-        console.error("Error retrieving block:", error); 
-        res.status(500).json({ message: "Internal Server Error" }); 
-    });
-})
-
-// get transactions of the slot
-app.get("/txs/:slot", (req, res) => {
-    const { slot } = req.params;
-
-    db.query({
-        query: `FOR tx IN @@c FILTER tx.slot == ${slot} RETURN tx.signature`,
-        bindVars: { 
-            "@c": 'transactions',
-        },
-    })
-    .then((cursor) => {
-        return cursor.all();
-    })
-    .then((tx) => {
-        if(tx.length) {
-            res.status(200).json({"length ": tx.length,"transactions": tx})
-        } else {
-            res.status(404).json({ message: "Block not found not found" });
-        }
-    })
-    .catch(error => {
-        console.error("Error retrieving transactions:", error); 
-        res.status(500).json({ message: "Internal Server Error" }); 
-    });
-})
-
-app.get("/txSuccess/:slot", (req, res) => {
-    const { slot } = req.params;
-
-    db.query({
-        query: `FOR tx IN @@c FILTER tx.slot == ${slot} AND tx.success == true RETURN tx.signature`,
-        bindVars: { 
-            "@c": 'transactions',
-        },
-    })
-    .then((cursor) => {
-        return cursor.all();
-    })
-    .then((tx) => {
-        if(tx.length) {
-            res.status(200).json({"length": tx.length,"transactions": tx})
-        } else {
-            res.status(404).json({ message: "Block not found not found" });
-        }
-    })
-    .catch(error => {
-        console.error("Error retrieving transactions:", error); 
-        res.status(500).json({ message: "Internal Server Error" }); 
-    });
-})
-
-// get the transaction details by signature
-app.get("/tx/:sign", (req, res) => {
-    const { sign } = req.params;
-
-    db.query({
-        query: `FOR tx IN @@c FILTER tx.signature=="${sign}" RETURN tx`,
-        bindVars: {
-            "@c": "transactions"
-        }
-    })
-    .then((cursor) => {
-        return cursor.all();
-    })
-    .then((tx) => {
-        if(tx.length) {
-            res.status(200).json(tx[0])
-        } else {
-            res.status(404).json({ message: "Transaction not found not found" });
-        }
-    })
-    .catch(error => {
-        console.error("Error retrieving transactions:", error); 
-        res.status(500).json({ message: "Internal Server Error" }); 
-    });
-})
-
-app.listen(3000, () => {
-    console.log("app is running on port 3000");
-});
